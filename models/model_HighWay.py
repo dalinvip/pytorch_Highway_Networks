@@ -48,7 +48,7 @@ class Highway(nn.Module):
         return information_flow
 
 
-
+# HighWay recurrent model
 class HighWay_model(nn.Module):
 
     def __init__(self, args):
@@ -61,6 +61,7 @@ class HighWay_model(nn.Module):
         if args.word_Embedding is True:
             pretrained_weight = np.array(args.pretrained_weight)
             self.embed.weight.data.copy_(torch.from_numpy(pretrained_weight))
+        # multiple HighWay layers List
         self.highway = nn.ModuleList([Highway(args) for _ in range(args.layer_num_highway)])
         self.output_layer = self.init_Linear(in_fea=1000, out_fea=self.C, bias=True)
 

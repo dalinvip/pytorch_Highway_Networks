@@ -14,6 +14,7 @@ from models import model_CNN
 from models import model_HighWay_BiLSTM
 from models import model_HighWay_CNN
 from models import model_HighWay
+from models import model_HighWayCNN
 import multiprocessing as mu
 import shutil
 import random
@@ -72,6 +73,7 @@ parser.add_argument('-static', action='store_true', default=hyperparams.static, 
 parser.add_argument('-layer_num_highway', type=int, default=hyperparams.layer_num_highway, help='the number of highway layer')
 parser.add_argument('-CNN', action='store_true', default=hyperparams.CNN, help='whether to use CNN model')
 parser.add_argument('-HighWay', action='store_true', default=hyperparams.HighWay, help='whether to use HighWay model')
+parser.add_argument('-HighWayCNN', action='store_true', default=hyperparams.HighWayCNN, help='whether to use HIghWayCNN model')
 parser.add_argument('-Highway_BiLSTM', action='store_true', default=hyperparams.HighWay_BiLSTM, help='whether to use HighWay_BiLSTM model')
 parser.add_argument('-Highway_CNN', action='store_true', default=hyperparams.HighWay_CNN, help='whether to use HighWay_CNN model')
 parser.add_argument('-wide_conv', action='store_true', default=hyperparams.wide_conv, help='whether to use wide conv')
@@ -188,6 +190,11 @@ elif args.HighWay is True:
     # model = model_HighWay.Highway(args)
     model = model_HighWay.HighWay_model(args)
     shutil.copy("./models/model_HighWay.py", "./snapshot/" + mulu)
+elif args.HighWayCNN is True:
+    print("loading HighWayCNN model......")
+    # model = model_HighWay.Highway(args)
+    model = model_HighWayCNN.HighWayCNN_model(args)
+    shutil.copy("./models/model_HighWay.py", "./snapshot/" + mulu)
 print(model)
         
 
@@ -207,6 +214,9 @@ elif args.Highway_CNN is True:
     model_count = train_ALL_CNN.train(train_iter, dev_iter, test_iter, model, args)
 elif args.HighWay is True:
     print("HighWay training start......")
+    model_count = train_Highway.train(train_iter, dev_iter, test_iter, model, args)
+elif args.HighWayCNN is True:
+    print("HighWayCNN training start......")
     model_count = train_Highway.train(train_iter, dev_iter, test_iter, model, args)
 print("Model_count", model_count)
 resultlist = []

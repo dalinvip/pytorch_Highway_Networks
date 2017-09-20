@@ -25,11 +25,13 @@ dropout_embed = 0.6
 max_norm = 5
 clip_max_norm = 3
 kernel_num = 200
-kernel_sizes = "1,2,3,4"
+# kernel_sizes = "1,2,3,4"
+kernel_sizes = "4"
 static = False
 layer_num_highway = 3
 CNN = False
-HighWay = True
+HighWay = False
+HighWayCNN = True
 HighWay_CNN = False
 HighWay_BiLSTM = False
 # select optim algorhtim to train
