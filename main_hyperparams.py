@@ -9,9 +9,11 @@ from loaddata import mydatasets_self_two
 from loaddata.load_external_word_embedding import Word_Embedding
 import train_ALL_CNN
 import train_ALL_LSTM
+import train_Highway
 from models import model_CNN
 from models import model_HighWay_BiLSTM
 from models import model_HighWay_CNN
+from models import model_HighWay
 import multiprocessing as mu
 import shutil
 import random
@@ -67,7 +69,9 @@ parser.add_argument('-embed-dim', type=int, default=hyperparams.embed_dim, help=
 parser.add_argument('-kernel-num', type=int, default=hyperparams.kernel_num, help='number of each kind of kernel')
 parser.add_argument('-kernel-sizes', type=str, default=hyperparams.kernel_sizes, help='comma-separated kernel size to use for convolution')
 parser.add_argument('-static', action='store_true', default=hyperparams.static, help='fix the embedding')
+parser.add_argument('-layer_num_highway', type=int, default=hyperparams.layer_num_highway, help='the number of highway layer')
 parser.add_argument('-CNN', action='store_true', default=hyperparams.CNN, help='whether to use CNN model')
+parser.add_argument('-HighWay', action='store_true', default=hyperparams.HighWay, help='whether to use HighWay model')
 parser.add_argument('-Highway_BiLSTM', action='store_true', default=hyperparams.HighWay_BiLSTM, help='whether to use HighWay_BiLSTM model')
 parser.add_argument('-Highway_CNN', action='store_true', default=hyperparams.HighWay_CNN, help='whether to use HighWay_CNN model')
 parser.add_argument('-wide_conv', action='store_true', default=hyperparams.wide_conv, help='whether to use wide conv')
@@ -179,6 +183,11 @@ elif args.Highway_CNN is True:
     print("loading Highway_CNN model......")
     model = model_HighWay_CNN.HighWay_CNN(args)
     shutil.copy("./models/model_CNN.py", "./snapshot/" + mulu)
+elif args.HighWay is True:
+    print("loading HIghWay model......")
+    # model = model_HighWay.Highway(args)
+    model = model_HighWay.HighWay_model(args)
+    shutil.copy("./models/model_HighWay.py", "./snapshot/" + mulu)
 print(model)
         
 
@@ -196,6 +205,9 @@ elif args.Highway_BiLSTM is True:
 elif args.Highway_CNN is True:
     print("Highway_CNN training start......")
     model_count = train_ALL_CNN.train(train_iter, dev_iter, test_iter, model, args)
+elif args.HighWay is True:
+    print("HighWay training start......")
+    model_count = train_Highway.train(train_iter, dev_iter, test_iter, model, args)
 print("Model_count", model_count)
 resultlist = []
 if os.path.exists("./Test_Result.txt"):

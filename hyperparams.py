@@ -27,7 +27,9 @@ clip_max_norm = 3
 kernel_num = 200
 kernel_sizes = "1,2,3,4"
 static = False
-CNN = True
+layer_num_highway = 3
+CNN = False
+HighWay = True
 HighWay_CNN = False
 HighWay_BiLSTM = False
 # select optim algorhtim to train
@@ -40,7 +42,7 @@ wide_conv = True
 # min freq to include during built the vocab, default is 1
 min_freq = 1
 # word_Embedding
-word_Embedding = True
+word_Embedding = False
 embed_dim = 300
 # word_Embedding_Path = "./word2vec/glove.sentiment.conj.pretrained.txt"
 word_Embedding_Path = "./word2vec/glove.840B.300d.handledword2vec.txt"
