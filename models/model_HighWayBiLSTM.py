@@ -27,6 +27,9 @@ class HighwayBiLSTM(nn.Module):
         self.fc1 = self.init_Linear(in_fea=in_feas, out_fea=in_feas, bias=True)
         # Highway gate layer  T in the Highway formula
         self.gate_layer = self.init_Linear(in_fea=in_feas, out_fea=in_feas, bias=True)
+        # if bidirection convert dim
+        self.convert_layer = self.init_Linear(in_fea=self.args.lstm_hidden_dim * 2,
+                                              out_fea=self.args.embed_dim, bias=True)
         self.hidden = self.init_hidden(self.num_layers, args.batch_size)
 
     def init_hidden(self, num_layers, batch_size):
@@ -41,6 +44,7 @@ class HighwayBiLSTM(nn.Module):
 
     def forward(self, x, hidden):
         # print(x.size())
+        # print(hidden)
         x, hidden = self.bilstm(x, hidden)
         x = torch.transpose(x, 0, 1)
         x = torch.transpose(x, 1, 2)
@@ -62,13 +66,17 @@ class HighwayBiLSTM(nn.Module):
             allow_transformation = torch.mul(normal_fc, transformation_layer)
             allow_carry = torch.mul(x[i], carry_layer)
             information_flow = torch.add(allow_transformation, allow_carry)
+            # convert the dim im bidirection
+            # print(information_flow.size())
+            information_flow = self.convert_layer(torch.transpose(information_flow, 0, 1))
             # follow for the next input
             # information_flow = normal_fc
+            # print(information_flow.size())
             information_flow = information_flow.unsqueeze(0)
             list.append(information_flow)
         information_flow = torch.cat(list, 0)
         # print("dfff", information_flow.size())
-        information_flow = torch.transpose(information_flow, 1, 2)
+        # information_flow = torch.transpose(information_flow, 1, 2)
         information_flow = torch.transpose(information_flow, 0, 1)
         # print(information_flow.size())
         return information_flow, hidden
@@ -94,7 +102,7 @@ class HighWayBiLSTM_model(nn.Module):
             self.embed.weight.data.copy_(torch.from_numpy(pretrained_weight))
         # multiple HighWay layers List
         self.highway = nn.ModuleList([HighwayBiLSTM(args) for _ in range(args.layer_num_highway)])
-        self.output_layer = self.init_Linear(in_fea=self.args.lstm_hidden_dim * 2, out_fea=self.C, bias=True)
+        self.output_layer = self.init_Linear(in_fea=self.args.embed_dim, out_fea=self.C, bias=True)
         self.hidden = self.init_hidden(self.num_layers, args.batch_size)
 
     def init_Linear(self, in_fea, out_fea, bias):
@@ -110,8 +118,12 @@ class HighWayBiLSTM_model(nn.Module):
     def forward(self, x):
         x = self.embed(x)
         x = self.dropout_embed(x)
+        # print(x.size())
         # self.output_layer = self.init_Linear(in_fea=self.args.lstm_hidden_dim * 2, out_fea=self.C, bias=True)
         for current_layer in self.highway:
+            self.hidden = self.init_hidden(self.num_layers, x.size(1))
+            # print(self.hidden)
+            # print(current_layer)
             x, self.hidden = current_layer(x, self.hidden)
 
         # print(x.size())

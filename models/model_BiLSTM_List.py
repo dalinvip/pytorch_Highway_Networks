@@ -26,6 +26,9 @@ class BiLSTMList(nn.Module):
         self.fc1 = self.init_Linear(in_fea=in_feas, out_fea=in_feas, bias=True)
         # Highway gate layer  T in the Highway formula
         self.gate_layer = self.init_Linear(in_fea=in_feas, out_fea=in_feas, bias=True)
+        # if bidirection convert dim
+        self.convert_layer = self.init_Linear(in_fea=self.args.lstm_hidden_dim * 2,
+                                              out_fea=self.args.embed_dim, bias=True)
         self.hidden = self.init_hidden(self.num_layers, args.batch_size)
 
     def init_hidden(self, num_layers, batch_size):
@@ -41,6 +44,22 @@ class BiLSTMList(nn.Module):
     def forward(self, x, hidden):
         # print(x.size())
         x, hidden = self.bilstm(x, hidden)
+        list = []
+        x = torch.transpose(x, 0, 1)
+        # print(x.size())
+        for i in range(x.size(0)):
+            # convert the dim im bidirection
+            information_flow = x[i]
+            # print(information_flow.size())
+            # information_flow = self.convert_layer(torch.transpose(information_flow, 0, 1))
+            information_flow = self.convert_layer(information_flow)
+            # follow for the next input
+            # information_flow = normal_fc
+            # print(information_flow.size())
+            information_flow = information_flow.unsqueeze(0)
+            list.append(information_flow)
+        x = torch.cat(list, 0)
+        # print(x.size())
         return x, hidden
 
 
@@ -63,7 +82,7 @@ class BiLSTMList_model(nn.Module):
             self.embed.weight.data.copy_(torch.from_numpy(pretrained_weight))
         # multiple HighWay layers List
         self.highway = nn.ModuleList([BiLSTMList(args) for _ in range(args.layer_num_highway)])
-        self.output_layer = self.init_Linear(in_fea=self.args.lstm_hidden_dim * 2, out_fea=self.C, bias=True)
+        self.output_layer = self.init_Linear(in_fea=self.args.embed_dim, out_fea=self.C, bias=True)
         self.hidden = self.init_hidden(self.num_layers, args.batch_size)
 
     def init_Linear(self, in_fea, out_fea, bias):
@@ -79,8 +98,10 @@ class BiLSTMList_model(nn.Module):
     def forward(self, x):
         x = self.embed(x)
         x = self.dropout_embed(x)
+        # print(x.size())
         # self.output_layer = self.init_Linear(in_fea=self.args.lstm_hidden_dim * 2, out_fea=self.C, bias=True)
         for current_layer in self.highway:
+            self.hidden = self.init_hidden(self.args.lstm_num_layers, x.size(1))
             x, self.hidden = current_layer(x, self.hidden)
 
         # print(x.size())

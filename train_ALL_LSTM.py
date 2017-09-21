@@ -60,8 +60,8 @@ def train(train_iter, dev_iter, test_iter, model, args):
             model.zero_grad()
             model.hidden = model.init_hidden(args.lstm_num_layers, args.batch_size)
             if feature.size(1) != args.batch_size:
-                # continue
-                model.hidden = model.init_hidden(args.lstm_num_layers, feature.size(1))
+                continue
+                # model.hidden = model.init_hidden(args.lstm_num_layers, feature.size(1))
             logit = model(feature)
             loss = F.cross_entropy(logit, target)
             loss.backward()
@@ -111,6 +111,7 @@ def eval(data_iter, model, args, scheduler):
 
         model.hidden = model.init_hidden(args.lstm_num_layers, args.batch_size)
         if feature.size(1) != args.batch_size:
+            # print("aaa")
             # continue
             model.hidden = model.init_hidden(args.lstm_num_layers, feature.size(1))
         logit = model(feature)
