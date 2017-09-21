@@ -20,18 +20,21 @@ shuffle = True
 epochs_shuffle = True
 FIVE_CLASS_TASK = False
 TWO_CLASS_TASK = True
-dropout = 0.6
+dropout = 0.5
 dropout_embed = 0.6
 max_norm = 5
 clip_max_norm = 3
 kernel_num = 200
 # kernel_sizes = "1,2,3,4"
-kernel_sizes = "4"
+kernel_sizes = "5"
 static = False
-layer_num_highway = 3
+layer_num_highway = 1
 CNN = False
+BiLSTM_1 = False
+BiLSTM_LIST = False
 HighWay = False
-HighWayCNN = True
+HighWayCNN = False
+HighWayBiLSTM = True
 HighWay_CNN = False
 HighWay_BiLSTM = False
 # select optim algorhtim to train
@@ -44,7 +47,7 @@ wide_conv = True
 # min freq to include during built the vocab, default is 1
 min_freq = 1
 # word_Embedding
-word_Embedding = False
+word_Embedding = True
 embed_dim = 300
 # word_Embedding_Path = "./word2vec/glove.sentiment.conj.pretrained.txt"
 word_Embedding_Path = "./word2vec/glove.840B.300d.handledword2vec.txt"

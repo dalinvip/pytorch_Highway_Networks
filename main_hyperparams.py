@@ -15,6 +15,9 @@ from models import model_HighWay_BiLSTM
 from models import model_HighWay_CNN
 from models import model_HighWay
 from models import model_HighWayCNN
+from models import model_HighWayBiLSTM
+from models import model_BiLSTM_1
+from models import model_BiLSTM_List
 import multiprocessing as mu
 import shutil
 import random
@@ -72,8 +75,11 @@ parser.add_argument('-kernel-sizes', type=str, default=hyperparams.kernel_sizes,
 parser.add_argument('-static', action='store_true', default=hyperparams.static, help='fix the embedding')
 parser.add_argument('-layer_num_highway', type=int, default=hyperparams.layer_num_highway, help='the number of highway layer')
 parser.add_argument('-CNN', action='store_true', default=hyperparams.CNN, help='whether to use CNN model')
+parser.add_argument('-BiLSTM_1', action='store_true', default=hyperparams.BiLSTM_1, help='whether to use BiLSTM_1 model')
+parser.add_argument('-BiLSTM_LIST', action='store_true', default=hyperparams.BiLSTM_LIST, help='whether to use BiLSTM_LIST model')
 parser.add_argument('-HighWay', action='store_true', default=hyperparams.HighWay, help='whether to use HighWay model')
-parser.add_argument('-HighWayCNN', action='store_true', default=hyperparams.HighWayCNN, help='whether to use HIghWayCNN model')
+parser.add_argument('-HighWayCNN', action='store_true', default=hyperparams.HighWayCNN, help='whether to use HighWayCNN model')
+parser.add_argument('-HighWayBiLSTM', action='store_true', default=hyperparams.HighWayBiLSTM, help='whether to use HighWayBiLSTM model')
 parser.add_argument('-Highway_BiLSTM', action='store_true', default=hyperparams.HighWay_BiLSTM, help='whether to use HighWay_BiLSTM model')
 parser.add_argument('-Highway_CNN', action='store_true', default=hyperparams.HighWay_CNN, help='whether to use HighWay_CNN model')
 parser.add_argument('-wide_conv', action='store_true', default=hyperparams.wide_conv, help='whether to use wide conv')
@@ -177,6 +183,16 @@ if args.CNN is True:
     model = model_CNN.CNN_Text(args)
     # save model in this time
     shutil.copy("./models/model_CNN.py", "./snapshot/" + mulu)
+if args.BiLSTM_1 is True:
+    print("loading BiLSTM_1 model.....")
+    model = model_BiLSTM_1.BiLSTM_1(args)
+    # save model in this time
+    shutil.copy("./models/model_BiLSTM_1.py", "./snapshot/" + mulu)
+if args.BiLSTM_LIST is True:
+    print("loading BiLSTM_LIST model.....")
+    model = model_BiLSTM_List.BiLSTMList_model(args)
+    # save model in this time
+    shutil.copy("./models/model_BiLSTM_List.py", "./snapshot/" + mulu)
 elif args.Highway_BiLSTM is True:
     print("loading Highway_BILSTM model......")
     model = model_HighWay_BiLSTM.HighWay_BiLSTM(args)
@@ -195,6 +211,10 @@ elif args.HighWayCNN is True:
     # model = model_HighWay.Highway(args)
     model = model_HighWayCNN.HighWayCNN_model(args)
     shutil.copy("./models/model_HighWay.py", "./snapshot/" + mulu)
+elif args.HighWayBiLSTM is True:
+    print("loading HighWayCNN model......")
+    model = model_HighWayBiLSTM.HighWayBiLSTM_model(args)
+    shutil.copy("./models/model_HighWay.py", "./snapshot/" + mulu)
 print(model)
         
 
@@ -206,6 +226,12 @@ if os.path.exists("./Test_Result.txt"):
 if args.CNN is True:
     print("CNN training start......")
     model_count = train_ALL_CNN.train(train_iter, dev_iter, test_iter, model, args)
+if args.BiLSTM_1 is True:
+    print("BiLSTM_1 training start......")
+    model_count = train_ALL_LSTM.train(train_iter, dev_iter, test_iter, model, args)
+if args.BiLSTM_LIST is True:
+    print("BiLSTM_LIST training start......")
+    model_count = train_ALL_LSTM.train(train_iter, dev_iter, test_iter, model, args)
 elif args.Highway_BiLSTM is True:
     print("Highway_BiLSTM training start......")
     model_count = train_ALL_LSTM.train(train_iter, dev_iter, test_iter, model, args)
@@ -218,6 +244,9 @@ elif args.HighWay is True:
 elif args.HighWayCNN is True:
     print("HighWayCNN training start......")
     model_count = train_Highway.train(train_iter, dev_iter, test_iter, model, args)
+elif args.HighWayBiLSTM is True:
+    print("HighWayBiLSTM training start......")
+    model_count = train_ALL_LSTM.train(train_iter, dev_iter, test_iter, model, args)
 print("Model_count", model_count)
 resultlist = []
 if os.path.exists("./Test_Result.txt"):
