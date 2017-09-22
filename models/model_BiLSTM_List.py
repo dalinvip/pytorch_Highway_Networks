@@ -34,12 +34,19 @@ class BiLSTMList(nn.Module):
     def init_hidden(self, num_layers, batch_size):
         # the first is the hidden h
         # the second is the cell  c
-        return (Variable(torch.zeros(2 * num_layers, batch_size, self.hidden_dim)),
-                Variable(torch.zeros(2 * num_layers, batch_size, self.hidden_dim)))
+        if self.args.cuda is True:
+            return (Variable(torch.zeros(2 * num_layers, batch_size, self.hidden_dim)).cuda(),
+                    Variable(torch.zeros(2 * num_layers, batch_size, self.hidden_dim)).cuda())
+        else:
+            return (Variable(torch.zeros(2 * num_layers, batch_size, self.hidden_dim)),
+                    Variable(torch.zeros(2 * num_layers, batch_size, self.hidden_dim)))
 
     def init_Linear(self, in_fea, out_fea, bias):
         linear = nn.Linear(in_features=in_fea, out_features=out_fea, bias=bias)
-        return linear
+        if self.args.cuda is True:
+            return linear.cuda()
+        else:
+            return linear
 
     def forward(self, x, hidden):
         # print(x.size())
@@ -60,6 +67,7 @@ class BiLSTMList(nn.Module):
             list.append(information_flow)
         x = torch.cat(list, 0)
         # print(x.size())
+        x= torch.transpose(x, 0, 1)
         return x, hidden
 
 
@@ -87,21 +95,30 @@ class BiLSTMList_model(nn.Module):
 
     def init_Linear(self, in_fea, out_fea, bias):
         linear = nn.Linear(in_features=in_fea, out_features=out_fea, bias=bias)
-        return linear
+        if self.args.cuda is True:
+            return linear.cuda()
+        else:
+            return linear
 
     def init_hidden(self, num_layers, batch_size):
         # the first is the hidden h
         # the second is the cell  c
-        return (Variable(torch.zeros(2 * num_layers, batch_size, self.hidden_dim)),
-                Variable(torch.zeros(2 * num_layers, batch_size, self.hidden_dim)))
+        if self.args.cuda is True:
+            return (Variable(torch.zeros(2 * num_layers, batch_size, self.hidden_dim)).cuda(),
+                    Variable(torch.zeros(2 * num_layers, batch_size, self.hidden_dim)).cuda())
+        else:
+            return (Variable(torch.zeros(2 * num_layers, batch_size, self.hidden_dim)),
+                    Variable(torch.zeros(2 * num_layers, batch_size, self.hidden_dim)))
 
     def forward(self, x):
         x = self.embed(x)
         x = self.dropout_embed(x)
         # print(x.size())
         # self.output_layer = self.init_Linear(in_fea=self.args.lstm_hidden_dim * 2, out_fea=self.C, bias=True)
+        self.hidden = self.init_hidden(self.args.lstm_num_layers, x.size(1))
         for current_layer in self.highway:
-            self.hidden = self.init_hidden(self.args.lstm_num_layers, x.size(1))
+            # print(current_layer)
+            # print(x.size())
             x, self.hidden = current_layer(x, self.hidden)
 
         # print(x.size())
@@ -112,7 +129,11 @@ class BiLSTMList_model(nn.Module):
         x = F.tanh(x)
         output_layer = self.output_layer(x)
         # print(output_layer.size())
-        return output_layer
+        # print()
+        if self.args.cuda is True:
+            return output_layer.cuda()
+        else:
+            return output_layer
 
 
 

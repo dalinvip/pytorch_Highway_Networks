@@ -49,19 +49,19 @@ def train(train_iter, dev_iter, test_iter, model, args):
         # print("now lr is {} \n".format(scheduler.get_lr()))
         # print("now lr is {} \n".format(optimizer.param_groups[0].get("lr")))
         for batch in train_iter:
-            feature, target = batch.text, batch.label.data.sub_(1)
+            feature, target = batch.text, batch.label
             # feature.data.t_()
-            # target.data.sub_(1)  # batch first, index align
+            target.data.sub_(1)  # batch first, index align
             if args.cuda:
                 feature, target = feature.cuda(), target.cuda()
 
-            target = autograd.Variable(target)  # question 1
+            # target = autograd.Variable(target)  # question 1
             optimizer.zero_grad()
             model.zero_grad()
             model.hidden = model.init_hidden(args.lstm_num_layers, args.batch_size)
             if feature.size(1) != args.batch_size:
-                continue
-                # model.hidden = model.init_hidden(args.lstm_num_layers, feature.size(1))
+                # continue
+                model.hidden = model.init_hidden(args.lstm_num_layers, feature.size(1))
             logit = model(feature)
             loss = F.cross_entropy(logit, target)
             loss.backward()
