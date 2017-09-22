@@ -10,11 +10,11 @@ import hyperparams
 torch.manual_seed(hyperparams.seed_num)
 random.seed(hyperparams.seed_num)
 
-# HighWay Networks model
-class HighwayCNN(nn.Module):
+
+class HCNN(nn.Module):
 
     def __init__(self, args):
-        super(HighwayCNN, self).__init__()
+        super(HCNN, self).__init__()
         self.args = args
         V = args.embed_num
         D = args.embed_dim
@@ -41,39 +41,54 @@ class HighwayCNN(nn.Module):
         return linear
 
     def forward(self, x):
-        in_fea = x.size(0)
-        out_fea = x.size(1)
+        source_x = x
+        # print("source_x ", source_x.size())
+        # print(x)
         x = x.unsqueeze(1)  # (N,Ci,W,D)
         x = [F.relu(conv(x)).squeeze(3) for conv in self.convs1]  # [(N,Co,W), ...]*len(Ks)
         x = torch.cat(x, 1)
-        # normal layer in the formula is H
-        out_fea = x.size(2)
+        # in the formula is the H
+        normal_fc = torch.transpose(x, 1, 2)
+        out_fea = x.size(1)
         self.fc1 = self.init_Linear(in_fea=out_fea, out_fea=out_fea, bias=True)
         self.gate_layer = self.init_Linear(in_fea=out_fea, out_fea=out_fea, bias=True)
+        # print(x.size())
+        # print(self.fc1)
+        # print(self.gate_layer)
         list = []
-        for i in range(x.size(0)):
-            normal_fc = F.tanh(self.fc1(x[i]))
-            # transformation gate layer in the formula is T
-            transformation_layer = F.sigmoid(self.gate_layer(x[i]))
-            # carry gate layer in the formula is C
-            carry_layer = 1 - transformation_layer
-            # formula Y = H * T + x * C
-            allow_transformation = torch.mul(normal_fc, transformation_layer)
-            allow_carry = torch.mul(x[i], carry_layer)
-            information_flow = torch.add(allow_transformation, allow_carry)
-            # follow for the next input
-            information_flow = information_flow.unsqueeze(0)
-            list.append(information_flow)
-        information_flow = torch.cat(list, 0)
-        information_flow = torch.transpose(information_flow, 1, 2)
+        # source_x = torch.transpose(source_x, 0, 1)
+        # print(source_x.size())
+        for i in range(source_x.size(0)):
+            # print(source_x[i].size())
+            information_source = self.gate_layer(source_x[i])
+            # print(information_source.size())
+            information_source = information_source.unsqueeze(0)
+            list.append(information_source)
+        information_source = torch.cat(list, 0)
+        # print("wwww", information_source.size())
+        # print(information_source)
+        # the formula is Y = H * T + x * C
+        # transformation gate layer in the formula is T
+        transformation_layer = F.sigmoid(information_source)
+        # print(transformation_layer.size())
+        # carry gate layer in the formula is C
+        carry_layer = 1 - transformation_layer
+        # print(carry_layer.size())
+        allow_transformation = torch.mul(normal_fc, transformation_layer)
+        # print(sourxe_x.size())
+        # allow_carry = torch.mul(information_source, carry_layer)
+        allow_carry = torch.mul(source_x, carry_layer)
+        information_flow = torch.add(allow_transformation, allow_carry)
+        # print(information_flow.size())
+        # information_flow = torch.transpose(information_flow, 1, 2)
         return information_flow
 
 
 # HighWay recurrent model
-class HighWayCNN_model(nn.Module):
+class HCNN_model(nn.Module):
 
     def __init__(self, args):
-        super(HighWayCNN_model, self).__init__()
+        super(HCNN_model, self).__init__()
         self.args = args
         V = args.embed_num
         D = args.embed_dim
@@ -83,8 +98,8 @@ class HighWayCNN_model(nn.Module):
             pretrained_weight = np.array(args.pretrained_weight)
             self.embed.weight.data.copy_(torch.from_numpy(pretrained_weight))
         # multiple HighWay layers List
-        self.highway = nn.ModuleList([HighwayCNN(args) for _ in range(args.layer_num_highway)])
-        self.output_layer = self.init_Linear(in_fea=1000, out_fea=self.C, bias=True)
+        self.highway = nn.ModuleList([HCNN(args) for _ in range(args.layer_num_highway)])
+        self.output_layer = self.init_Linear(in_fea=self.args.embed_dim, out_fea=self.C, bias=True)
 
     def init_Linear(self, in_fea, out_fea, bias):
         linear = nn.Linear(in_features=in_fea, out_features=out_fea, bias=bias)
@@ -92,10 +107,14 @@ class HighWayCNN_model(nn.Module):
 
     def forward(self, x):
         x = self.embed(x)
-        self.output_layer = self.init_Linear(in_fea=x.size(2), out_fea=self.C, bias=True)
+        # print(x.size())
+        # self.output_layer = self.init_Linear(in_fea=x.size(2), out_fea=self.C, bias=True)
         for current_layer in self.highway:
+            # print(current_layer)
             x = current_layer(x)
+        # print(x.size())
         x = torch.transpose(x, 1, 2)
+        # print("wewew", x.size())
         x = F.max_pool1d(x, x.size(2)).squeeze(2)
         output_layer = self.output_layer(x)
         return output_layer

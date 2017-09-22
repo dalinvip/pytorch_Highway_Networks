@@ -18,6 +18,8 @@ from models import model_HighWayCNN
 from models import model_HighWayBiLSTM
 from models import model_BiLSTM_1
 from models import model_BiLSTM_List
+from models import model_HBiLSTM
+from models import model_HCNN
 import multiprocessing as mu
 import shutil
 import random
@@ -78,6 +80,8 @@ parser.add_argument('-CNN', action='store_true', default=hyperparams.CNN, help='
 parser.add_argument('-BiLSTM_1', action='store_true', default=hyperparams.BiLSTM_1, help='whether to use BiLSTM_1 model')
 parser.add_argument('-BiLSTM_LIST', action='store_true', default=hyperparams.BiLSTM_LIST, help='whether to use BiLSTM_LIST model')
 parser.add_argument('-HighWay', action='store_true', default=hyperparams.HighWay, help='whether to use HighWay model')
+parser.add_argument('-HBiLSTM', action='store_true', default=hyperparams.HBiLSTM, help='whether to use HBiLSTM model')
+parser.add_argument('-HCNN', action='store_true', default=hyperparams.HCNN, help='whether to use HCNN model')
 parser.add_argument('-HighWayCNN', action='store_true', default=hyperparams.HighWayCNN, help='whether to use HighWayCNN model')
 parser.add_argument('-HighWayBiLSTM', action='store_true', default=hyperparams.HighWayBiLSTM, help='whether to use HighWayBiLSTM model')
 parser.add_argument('-Highway_BiLSTM', action='store_true', default=hyperparams.HighWay_BiLSTM, help='whether to use HighWay_BiLSTM model')
@@ -102,18 +106,19 @@ def mrs_two(path, train_name, dev_name, test_name, char_data, text_field, label_
     train_data, dev_data, test_data = mydatasets_self_two.MR.splits(path, train_name, dev_name, test_name,
                                                                     char_data, text_field, label_field)
     print("len(train_data) {} ".format(len(train_data)))
-    # text_field.build_vocab(train_data, dev_data, test_data)
-    # label_field.build_vocab(train_data, dev_data, test_data)
     text_field.build_vocab(train_data.text, min_freq=args.min_freq)
     label_field.build_vocab(train_data.label)
-    # train_iter, dev_iter, test_iter = data.Iterator.splits(
-    #                                     (train_data, dev_data, test_data),
-    #                                     batch_sizes=(args.batch_size, len(dev_data), len(test_data)),
-    #                                     **kargs)
     train_iter, dev_iter, test_iter = data.Iterator.splits(
                                         (train_data, dev_data, test_data),
-                                        batch_sizes=(args.batch_size, args.batch_size, args.batch_size),
+                                        batch_sizes=(args.batch_size, len(dev_data), len(test_data)),
                                         **kargs)
+    # train_iter = data.Iterator.splits((train_data), batch_sizes=(args.batch_size), **kargs)
+    # dev_iter = data.Iterator.splits((dev_data), batch_sizes=(args.batch_size), **kargs)
+    # test_iter = data.Iterator.splits((test_data), batch_sizes=(args.batch_size), **kargs)
+    # train_iter, dev_iter, test_iter = data.Iterator.splits(
+    #                                     (train_data, dev_data, test_data),
+    #                                     batch_sizes=(args.batch_size, args.batch_size, args.batch_size),
+    #                                     **kargs)
     return train_iter, dev_iter, test_iter
 
 # load data
@@ -187,16 +192,27 @@ if args.CNN is True:
     model = model_CNN.CNN_Text(args)
     # save model in this time
     shutil.copy("./models/model_CNN.py", "./snapshot/" + mulu)
-if args.BiLSTM_1 is True:
+elif args.BiLSTM_1 is True:
     print("loading BiLSTM_1 model.....")
     model = model_BiLSTM_1.BiLSTM_1(args)
     # save model in this time
     shutil.copy("./models/model_BiLSTM_1.py", "./snapshot/" + mulu)
-if args.BiLSTM_LIST is True:
+elif args.BiLSTM_LIST is True:
     print("loading BiLSTM_LIST model.....")
     model = model_BiLSTM_List.BiLSTMList_model(args)
     # save model in this time
     shutil.copy("./models/model_BiLSTM_List.py", "./snapshot/" + mulu)
+elif args.HBiLSTM is True:
+    print("loading HBiLSTM model.....")
+    model = model_HBiLSTM.HBiLSTM_model(args)
+    # model.cuda()
+    # save model in this time
+    shutil.copy("./models/model_HBiLSTM.py", "./snapshot/" + mulu)
+elif args.HCNN is True:
+    print("loading HCNN model.....")
+    model = model_HCNN.HCNN_model(args)
+    # save model in this time
+    shutil.copy("./models/model_HCNN.py", "./snapshot/" + mulu)
 elif args.Highway_BiLSTM is True:
     print("loading Highway_BILSTM model......")
     model = model_HighWay_BiLSTM.HighWay_BiLSTM(args)
@@ -219,6 +235,10 @@ elif args.HighWayBiLSTM is True:
     print("loading HighWayCNN model......")
     model = model_HighWayBiLSTM.HighWayBiLSTM_model(args)
     shutil.copy("./models/model_HighWay.py", "./snapshot/" + mulu)
+
+if args.cuda is True:
+    print("using cuda......")
+    model = model.cuda()
 print(model)
         
 
@@ -230,12 +250,18 @@ if os.path.exists("./Test_Result.txt"):
 if args.CNN is True:
     print("CNN training start......")
     model_count = train_ALL_CNN.train(train_iter, dev_iter, test_iter, model, args)
-if args.BiLSTM_1 is True:
+elif args.BiLSTM_1 is True:
     print("BiLSTM_1 training start......")
     model_count = train_ALL_LSTM.train(train_iter, dev_iter, test_iter, model, args)
-if args.BiLSTM_LIST is True:
+elif args.BiLSTM_LIST is True:
     print("BiLSTM_LIST training start......")
     model_count = train_ALL_LSTM.train(train_iter, dev_iter, test_iter, model, args)
+elif args.HBiLSTM is True:
+    print("HBiLSTM training start......")
+    model_count = train_ALL_LSTM.train(train_iter, dev_iter, test_iter, model, args)
+elif args.HCNN is True:
+    print("HCNN training start......")
+    model_count = train_ALL_CNN.train(train_iter, dev_iter, test_iter, model, args)
 elif args.Highway_BiLSTM is True:
     print("Highway_BiLSTM training start......")
     model_count = train_ALL_LSTM.train(train_iter, dev_iter, test_iter, model, args)

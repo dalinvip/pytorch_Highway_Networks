@@ -13,7 +13,7 @@ random.seed(hyperparams.seed_num)
 
 def train(train_iter, dev_iter, test_iter, model, args):
     if args.cuda:
-        model.cuda()
+        model = model.cuda()
 
     # optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=1e-8)
     # optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.init_weight_decay)
@@ -104,6 +104,9 @@ def eval(data_iter, model, args, scheduler):
     for batch in data_iter:
         feature, target = batch.text, batch.label
         target.data.sub_(1)
+        # feature, target = batch.text, batch.label.data.sub_(1)
+        if args.cuda is True:
+            feature, target = feature.cuda(), target.cuda()
         # feature.data.t_(), target.data.sub_(1)  # batch first, index align
         # feature.data.t_(),\
         # target.data.sub_(1)  # batch first, index align
@@ -138,6 +141,8 @@ def test_eval(data_iter, model, save_path, args, model_count):
     for batch in data_iter:
         feature, target = batch.text, batch.label
         target.data.sub_(1)
+        if args.cuda:
+            feature, target = feature.cuda(), target.cuda()
         # feature.data.t_()
         # target.data.sub_(1)  # batch first, index align
         # target = autograd.Variable(target)
