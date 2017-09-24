@@ -11,7 +11,7 @@
 - The test result in my demo. 
 > ![](https://i.imgur.com/JCGa4zi.jpg)
 
-##How to use the folder or file
+## How to use the folder or file
 
 - the file of **hyperparams.py** contains all hyperparams that need to modify, based on yours nedds, select neural networks what you want and config the hyperparams.
 
@@ -38,7 +38,7 @@
 - the word embedding file saved in the folder of **word2vec**, but now is empty, because of it is to big,so if you want to use word embedding,you can to download word2vec or glove file, then saved in the folder of word2vec,and make the option of word_Embedding to True and modifiy the value of word_Embedding_Path in the **hyperparams.py** file.
 
 
-##Highway  Networks and Highway Networks  Variant
+## Highway  Networks and Highway Networks  Variant
 
 1. **model-BiLSTM-1.py** is a simple bidirection LSTM neural networks model.
 
