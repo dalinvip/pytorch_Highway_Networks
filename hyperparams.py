@@ -31,10 +31,10 @@ static = False
 layer_num_highway = 3
 CNN = False
 BiLSTM_1 = False
-BiLSTM_LIST = True
+BiLSTM_LIST = False
 HighWay = False
 HBiLSTM = False
-HBiLSTM_CAT = False
+HBiLSTM_CAT = True
 HCNN = False
 HighWayCNN = False
 HighWayBiLSTM = False
@@ -50,7 +50,7 @@ wide_conv = True
 # min freq to include during built the vocab, default is 1
 min_freq = 1
 # word_Embedding
-word_Embedding = False
+word_Embedding = True
 embed_dim = 300
 # word_Embedding_Path = "./word2vec/glove.sentiment.conj.pretrained.txt"
 word_Embedding_Path = "./word2vec/glove.840B.300d.handledword2vec.txt"

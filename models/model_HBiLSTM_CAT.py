@@ -35,12 +35,19 @@ class HBiLSTM_CAT(nn.Module):
     def init_hidden(self, num_layers, batch_size):
         # the first is the hidden h
         # the second is the cell  c
-        return (Variable(torch.zeros(2 * num_layers, batch_size, self.hidden_dim)),
-                Variable(torch.zeros(2 * num_layers, batch_size, self.hidden_dim)))
+        if self.args.cuda is True:
+            return (Variable(torch.zeros(2 * num_layers, batch_size, self.hidden_dim)).cuda(),
+                    Variable(torch.zeros(2 * num_layers, batch_size, self.hidden_dim)).cuda())
+        else:
+            return (Variable(torch.zeros(2 * num_layers, batch_size, self.hidden_dim)),
+                    Variable(torch.zeros(2 * num_layers, batch_size, self.hidden_dim)))
 
     def init_Linear(self, in_fea, out_fea, bias):
         linear = nn.Linear(in_features=in_fea, out_features=out_fea, bias=bias)
-        return linear
+        if self.args.cuda is True:
+            return linear.cuda()
+        else:
+            return linear
 
     def forward(self, x, hidden):
         # handle the source input x
@@ -80,13 +87,16 @@ class HBiLSTM_CAT(nn.Module):
         # formula Y = H * T + x * C
         allow_transformation = torch.mul(normal_fc, transformation_layer)
 
-        # you can choose the strategy that zero-padding
-        zeros = torch.zeros(source_x.size(0), source_x.size(1), carry_layer.size(2) - source_x.size(2))
-        source_x = Variable(torch.cat((zeros, source_x.data), 2))
-        allow_carry = torch.mul(source_x, carry_layer)
+        # # you can choose the strategy that zero-padding
+        # zeros = torch.zeros(source_x.size(0), source_x.size(1), carry_layer.size(2) - source_x.size(2))
+        # if self.args.cuda is True:
+        #     source_x = Variable(torch.cat((zeros, source_x.data), 2)).cuda()
+        # else:
+        #     source_x = Variable(torch.cat((zeros, source_x.data), 2))
+        # allow_carry = torch.mul(source_x, carry_layer)
 
-        # # the information_source compare to the source_x is for the same size of x,y,H,T
-        # allow_carry = torch.mul(information_source, carry_layer)
+        # the information_source compare to the source_x is for the same size of x,y,H,T
+        allow_carry = torch.mul(information_source, carry_layer)
         information_flow = torch.add(allow_transformation, allow_carry)
         # print("wwwwwww", information_flow.size())
         # print(information_flow)
@@ -104,6 +114,9 @@ class HBiLSTM_CAT(nn.Module):
         # information_flow = torch.transpose(information_flow, 1, 2)
         information_convert = torch.transpose(information_convert, 0, 1)
         # print(information_flow.size())
+        # if self.args.cuda is True:
+        #     return information_convert.cuda(), hidden.cuda()
+        # else:
         return information_convert, hidden
         # return x, hidden
 
@@ -127,6 +140,7 @@ class HBiLSTM_CAT_model(nn.Module):
             self.embed.weight.data.copy_(torch.from_numpy(pretrained_weight))
         # multiple HighWay layers List
         self.highway = nn.ModuleList([HBiLSTM_CAT(args) for _ in range(args.layer_num_highway)])
+        # self.output_layer = self.init_Linear(in_fea=self.args.embed_dim * self.args.layer_num_highway, out_fea=self.C, bias=True)
         self.output_layer = self.init_Linear(in_fea=self.args.embed_dim, out_fea=self.C, bias=True)
         self.hidden = self.init_hidden(self.num_layers, args.batch_size)
 
@@ -137,8 +151,13 @@ class HBiLSTM_CAT_model(nn.Module):
     def init_hidden(self, num_layers, batch_size):
         # the first is the hidden h
         # the second is the cell  c
-        return (Variable(torch.zeros(2 * num_layers, batch_size, self.hidden_dim)),
-                Variable(torch.zeros(2 * num_layers, batch_size, self.hidden_dim)))
+        if self.args.cuda is True:
+            return (Variable(torch.zeros(2 * num_layers, batch_size, self.hidden_dim)).cuda(),
+                    Variable(torch.zeros(2 * num_layers, batch_size, self.hidden_dim)).cuda())
+        else:
+            return (Variable(torch.zeros(2 * num_layers, batch_size, self.hidden_dim)),
+                    Variable(torch.zeros(2 * num_layers, batch_size, self.hidden_dim)))
+
 
     def forward(self, x):
         x = self.embed(x)
@@ -146,13 +165,22 @@ class HBiLSTM_CAT_model(nn.Module):
         # print(x.size())
         # self.output_layer = self.init_Linear(in_fea=self.args.lstm_hidden_dim * 2, out_fea=self.C, bias=True)
         self.hidden = self.init_hidden(self.num_layers, x.size(1))
+        # print(self.hidden)
         for current_layer in self.highway:
-            # print(self.hidden)
-            # print(current_layer)
             x, self.hidden = current_layer(x, self.hidden)
-            print("wwww", x.size())
+            if self.args.layer_num_highway == 1:
+                cat_x = x
+            else:
+                if current_layer == self.highway[0]:
+                    cat_x = x
+                else:
+                    # print(cat_x.size())
+                    # two way cat
+                    # cat_x = torch.cat((cat_x, x), 2)
+                    cat_x = torch.cat((cat_x, x), 0)
+                    # print(cat_x.size())
 
-        # print(x.size())
+        x = cat_x
         x = torch.transpose(x, 0, 1)
         x = torch.transpose(x, 1, 2)
         x = F.tanh(x)
@@ -160,7 +188,10 @@ class HBiLSTM_CAT_model(nn.Module):
         x = F.tanh(x)
         output_layer = self.output_layer(x)
         # print(output_layer.size())
-        return output_layer
+        if self.args.cuda is True:
+            return output_layer.cuda()
+        else:
+            return output_layer
 
 
 
