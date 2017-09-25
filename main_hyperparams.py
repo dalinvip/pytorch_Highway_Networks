@@ -20,7 +20,8 @@ from models import model_BiLSTM_1
 from models import model_BiLSTM_List
 from models import model_HBiLSTM
 from models import model_HCNN
-from models import  model_HBiLSTM_CAT
+from models import model_HBiLSTM_CAT
+from models import model_BiLSTM_List_Cat
 import multiprocessing as mu
 import shutil
 import random
@@ -80,6 +81,7 @@ parser.add_argument('-layer_num_highway', type=int, default=hyperparams.layer_nu
 parser.add_argument('-CNN', action='store_true', default=hyperparams.CNN, help='whether to use CNN model')
 parser.add_argument('-BiLSTM_1', action='store_true', default=hyperparams.BiLSTM_1, help='whether to use BiLSTM_1 model')
 parser.add_argument('-BiLSTM_LIST', action='store_true', default=hyperparams.BiLSTM_LIST, help='whether to use BiLSTM_LIST model')
+parser.add_argument('-BiLSTM_LIST_CAT', action='store_true', default=hyperparams.BiLSTM_LIST_CAT, help='whether to use BiLSTM_LIST_CAT model')
 parser.add_argument('-HighWay', action='store_true', default=hyperparams.HighWay, help='whether to use HighWay model')
 parser.add_argument('-HBiLSTM', action='store_true', default=hyperparams.HBiLSTM, help='whether to use HBiLSTM model')
 parser.add_argument('-HBiLSTM_CAT', action='store_true', default=hyperparams.HBiLSTM_CAT, help='whether to use HBiLSTM_CAT model')
@@ -204,6 +206,11 @@ elif args.BiLSTM_LIST is True:
     model = model_BiLSTM_List.BiLSTMList_model(args)
     # save model in this time
     shutil.copy("./models/model_BiLSTM_List.py", "./snapshot/" + mulu)
+elif args.BiLSTM_LIST_CAT is True:
+    print("loading BiLSTM_LIST_CAT model.....")
+    model = model_BiLSTM_List_Cat.BiLSTMList_model_CAT(args)
+    # save model in this time
+    shutil.copy("./models/model_BiLSTM_List_Cat.py", "./snapshot/" + mulu)
 elif args.HBiLSTM is True:
     print("loading HBiLSTM model.....")
     model = model_HBiLSTM.HBiLSTM_model(args)
@@ -261,6 +268,9 @@ elif args.BiLSTM_1 is True:
     model_count = train_ALL_LSTM.train(train_iter, dev_iter, test_iter, model, args)
 elif args.BiLSTM_LIST is True:
     print("BiLSTM_LIST training start......")
+    model_count = train_ALL_LSTM.train(train_iter, dev_iter, test_iter, model, args)
+elif args.BiLSTM_LIST_CAT is True:
+    print("BiLSTM_LIST_CAT training start......")
     model_count = train_ALL_LSTM.train(train_iter, dev_iter, test_iter, model, args)
 elif args.HBiLSTM is True:
     print("HBiLSTM training start......")

@@ -64,6 +64,7 @@ def train(train_iter, dev_iter, test_iter, model, args):
                 model.hidden = model.init_hidden(args.lstm_num_layers, feature.size(1))
             logit = model(feature)
             loss = F.cross_entropy(logit, target)
+            # print(loss)
             loss.backward()
             if args.init_clip_max_norm is not None:
                 # print("aaaa {} ".format(args.init_clip_max_norm))

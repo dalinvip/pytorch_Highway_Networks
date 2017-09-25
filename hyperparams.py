@@ -28,13 +28,14 @@ kernel_num = 200
 # kernel_sizes = "1,2,3,4"
 kernel_sizes = "5"
 static = False
-layer_num_highway = 3
+layer_num_highway = 2
 CNN = False
 BiLSTM_1 = False
 BiLSTM_LIST = False
+BiLSTM_LIST_CAT = False
 HighWay = False
-HBiLSTM = False
-HBiLSTM_CAT = True
+HBiLSTM = True
+HBiLSTM_CAT = False
 HCNN = False
 HighWayCNN = False
 HighWayBiLSTM = False
@@ -65,7 +66,7 @@ test = False
 num_threads = 1
 freq_1_unk = False
 # whether to init w
-init_weight = False
+init_weight = True
 init_weight_value = 2.0
 # L2 weight_decay
 weight_decay = 1e-8   # default value is zero in Adam SGD
