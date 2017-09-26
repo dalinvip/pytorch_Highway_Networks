@@ -58,27 +58,29 @@ class HBiLSTM_CAT(nn.Module):
         normal_fc = torch.transpose(x, 0, 1)
         x = torch.transpose(x, 0, 1)
         x = torch.transpose(x, 1, 2)
-        # print(x.size())
         # normal layer in the formula is H
+        source_x = torch.transpose(source_x, 0, 1)
+
         in_fea = self.args.embed_dim
         out_fea = self.args.lstm_hidden_dim * 2
         self.fc1 = self.init_Linear(in_fea=in_fea, out_fea=out_fea, bias=True)
         self.gate_layer = self.init_Linear(in_fea=in_fea, out_fea=out_fea, bias=True)
-        # print(self.fc1)
-        # print(self.gate_layer)
-        # print(self.convert_layer)
+
+        # the first way to convert 3D tensor to the Linear
+        source_x = source_x.contiguous()
+        information_source = source_x.view(source_x.size(0) * source_x.size(1), source_x.size(2))
+        information_source = self.gate_layer(information_source)
+        information_source = information_source.view(source_x.size(0), source_x.size(1), information_source.size(1))
+
+        '''
+        # the another way to convert 3D tensor to the Linear
         list = []
-        source_x = torch.transpose(source_x, 0, 1)
-        # print(sourxe_x.size())
         for i in range(source_x.size(0)):
-            # convert the dim im bidirection
-            # information_flow = self.convert_layer(torch.transpose(information_flow, 0, 1))
-            # print(source_x[i].size())
             information_source = self.gate_layer(source_x[i])
-            # print(information_source.size())
             information_source = information_source.unsqueeze(0)
             list.append(information_source)
         information_source = torch.cat(list, 0)
+        '''
 
         # transformation gate layer in the formula is T
         transformation_layer = F.sigmoid(information_source)
@@ -87,38 +89,40 @@ class HBiLSTM_CAT(nn.Module):
         # formula Y = H * T + x * C
         allow_transformation = torch.mul(normal_fc, transformation_layer)
 
-        # # you can choose the strategy that zero-padding
+        '''
+        # # you also can choose the strategy that zero-padding
         # zeros = torch.zeros(source_x.size(0), source_x.size(1), carry_layer.size(2) - source_x.size(2))
         # if self.args.cuda is True:
         #     source_x = Variable(torch.cat((zeros, source_x.data), 2)).cuda()
         # else:
         #     source_x = Variable(torch.cat((zeros, source_x.data), 2))
         # allow_carry = torch.mul(source_x, carry_layer)
-
+        '''
         # the information_source compare to the source_x is for the same size of x,y,H,T
         allow_carry = torch.mul(information_source, carry_layer)
         information_flow = torch.add(allow_transformation, allow_carry)
-        # print("wwwwwww", information_flow.size())
-        # print(information_flow)
 
+        information_flow = information_flow.contiguous()
+        information_convert = information_flow.view(information_flow.size(0) * information_flow.size(1),
+                                                    information_flow.size(2))
+        information_convert = self.convert_layer(information_convert)
+        information_convert = information_convert.view(information_flow.size(0), information_flow.size(1),
+                                                       information_convert.size(1))
+
+        '''
+        # the another way 
         convert = []
-        for j in range(information_flow.size(0)):
-            # print(information_flow[i].size())
-            information_convert = self.convert_layer(information_flow[j])
-            # print(information_convert.size())
-            information_convert = information_convert.unsqueeze(0)
-            convert.append(information_convert)
-        information_convert = torch.cat(convert, 0)
-        # print("information_convert ", information_convert.size())
-
-        # information_flow = torch.transpose(information_flow, 1, 2)
+            for j in range(information_flow.size(0)):
+                # print(information_flow[i].size())
+                information_convert = self.convert_layer(information_flow[j])
+                # print(information_convert.size())
+                information_convert = information_convert.unsqueeze(0)
+                convert.append(information_convert)
+            information_convert = torch.cat(convert, 0)
+        '''
         information_convert = torch.transpose(information_convert, 0, 1)
-        # print(information_flow.size())
-        # if self.args.cuda is True:
-        #     return information_convert.cuda(), hidden.cuda()
-        # else:
         return information_convert, hidden
-        # return x, hidden
+
 
 
 # HighWay recurrent model
@@ -174,12 +178,8 @@ class HBiLSTM_CAT_model(nn.Module):
                 if current_layer == self.highway[0]:
                     cat_x = x
                 else:
-                    # print(cat_x.size())
-                    # two way cat
-                    # cat_x = torch.cat((cat_x, x), 2)
                     cat_x = torch.cat((cat_x, x), 0)
                     # print(cat_x.size())
-
         x = cat_x
         x = torch.transpose(x, 0, 1)
         x = torch.transpose(x, 1, 2)

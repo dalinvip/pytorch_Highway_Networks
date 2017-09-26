@@ -53,7 +53,8 @@ def train(train_iter, dev_iter, test_iter, model, args):
         print("now lr is {} \n".format(optimizer.param_groups[0].get("lr")))
         for batch in train_iter:
             feature, target = batch.text, batch.label
-            feature.data.t_(), target.data.sub_(1)  # batch first, index align
+            feature.data.t_()
+            target.data.sub_(1)  # batch first, index align
             if args.cuda:
                 feature, target = feature.cuda(), target.cuda()
 
@@ -92,19 +93,6 @@ def train(train_iter, dev_iter, test_iter, model, args):
                 test_model = torch.load(save_path)
                 model_count += 1
                 test_eval(test_iter, test_model, save_path, args, model_count)
-                # test_eval(test_iter, model, save_path, args, model_count)
-                # print("model_count \n", model_count)
-        # epoch_step += 1
-        # if 1 <= epoch <= args.epochs + 1:
-        #     print("\n\n第 {} 轮迭代测试结果:".format(epoch))
-        #     # eval(test_iter, model, args, scheduler)
-        #     if not os.path.isdir(args.save_dir):
-        #         os.makedirs(args.save_dir)
-        #     epoch_save_prefix = os.path.join(args.save_dir, 'snapshot')
-        #     epoch_save_path = '{}_steps{}.pt'.format(epoch_save_prefix, epoch_step)
-        #     torch.save(model, epoch_save_path)
-        #     test_epoch_model = torch.load(epoch_save_path)
-        #     test_eval(test_iter, test_epoch_model, epoch_save_path, args, 0000)
     return model_count
 
 
@@ -114,17 +102,13 @@ def eval(data_iter, model, args, scheduler):
     corrects, avg_loss = 0, 0
     for batch in data_iter:
         feature, target = batch.text, batch.label
-        feature.data.t_(), target.data.sub_(1)  # batch first, index align
+        feature.data.t_()
+        target.data.sub_(1)  # batch first, index align
         if args.cuda:
-            feature, target = feature.cuda(), feature.cuda()
+            feature, target = feature.cuda(), target.cuda()
 
         logit = model(feature)
         loss = F.cross_entropy(logit, target, size_average=False)
-        # scheduler.step(loss.data[0])
-        # if args.init_clip_max_norm is not None:
-        #     # print("aaaa {} ".format(args.init_clip_max_norm))
-        #     utils.clip_grad_norm(model.parameters(), max_norm=args.init_clip_max_norm)
-
         avg_loss += loss.data[0]
         corrects += (torch.max(logit, 1)[1].view(target.size()).data == target.data).sum()
 
@@ -144,24 +128,19 @@ def test_eval(data_iter, model, save_path, args, model_count):
     corrects, avg_loss = 0, 0
     for batch in data_iter:
         feature, target = batch.text, batch.label
-        feature.data.t_(), target.data.sub_(1)  # batch first, index align
+        feature.data.t_()
+        target.data.sub_(1)  # batch first, index align
         if args.cuda:
-            feature, target = feature.cuda(), feature.cuda()
+            feature, target = feature.cuda(), target.cuda()
 
         logit = model(feature)
         loss = F.cross_entropy(logit, target, size_average=False)
-        # scheduler.step(loss.data[0])
-        # if args.init_clip_max_norm is not None:
-        #     # print("aaaa {} ".format(args.init_clip_max_norm))
-        #     utils.clip_grad_norm(model.parameters(), max_norm=args.init_clip_max_norm)
-
         avg_loss += loss.data[0]
         corrects += (torch.max(logit, 1)
                      [1].view(target.size()).data == target.data).sum()
 
     size = len(data_iter.dataset)
     avg_loss = loss.data[0]/size
-    # accuracy = float(corrects)/size * 100.0
     accuracy = 100.0 * corrects/size
     model.train()
     print('\nEvaluation - loss: {:.6f}  acc: {:.4f}%({}/{}) \n'.format(avg_loss,

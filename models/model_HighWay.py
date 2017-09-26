@@ -27,7 +27,10 @@ class Highway(nn.Module):
 
     def init_Linear(self, in_fea, out_fea, bias):
         linear = nn.Linear(in_features=in_fea, out_features=out_fea, bias=bias)
-        return linear
+        if self.args.cuda is True:
+            return linear.cuda()
+        else:
+            return linear
 
     def forward(self, x):
         in_fea = x.size(0)
@@ -68,7 +71,10 @@ class HighWay_model(nn.Module):
 
     def init_Linear(self, in_fea, out_fea, bias):
         linear = nn.Linear(in_features=in_fea, out_features=out_fea, bias=bias)
-        return linear
+        if self.args.cuda is True:
+            return linear.cuda()
+        else:
+            return linear
 
     def forward(self, x):
         x = self.embed(x)
@@ -78,7 +84,10 @@ class HighWay_model(nn.Module):
         for current_layer in self.highway:
             x = current_layer(x)
         output_layer = self.output_layer(x)
-        return output_layer
+        if self.args.cuda is True:
+            return output_layer.cuda()
+        else:
+            return output_layer
 
 
 

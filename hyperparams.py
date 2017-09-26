@@ -66,7 +66,7 @@ test = False
 num_threads = 1
 freq_1_unk = False
 # whether to init w
-init_weight = True
+init_weight = False
 init_weight_value = 2.0
 # L2 weight_decay
 weight_decay = 1e-8   # default value is zero in Adam SGD

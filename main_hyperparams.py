@@ -116,13 +116,6 @@ def mrs_two(path, train_name, dev_name, test_name, char_data, text_field, label_
                                         (train_data, dev_data, test_data),
                                         batch_sizes=(args.batch_size, len(dev_data), len(test_data)),
                                         **kargs)
-    # train_iter = data.Iterator.splits((train_data), batch_sizes=(args.batch_size), **kargs)
-    # dev_iter = data.Iterator.splits((dev_data), batch_sizes=(args.batch_size), **kargs)
-    # test_iter = data.Iterator.splits((test_data), batch_sizes=(args.batch_size), **kargs)
-    # train_iter, dev_iter, test_iter = data.Iterator.splits(
-    #                                     (train_data, dev_data, test_data),
-    #                                     batch_sizes=(args.batch_size, args.batch_size, args.batch_size),
-    #                                     **kargs)
     return train_iter, dev_iter, test_iter
 
 # load data

@@ -51,23 +51,25 @@ class BiLSTMList_Cat(nn.Module):
     def forward(self, x, hidden):
         # print(x.size())
         x, hidden = self.bilstm(x, hidden)
-        list = []
         x = torch.transpose(x, 0, 1)
+
+        # the way to convert 3D tensor to Linear
+        x = x.contiguous()
+        information_flow = x.view(x.size(0) * x.size(1), x.size(2))
+        information_flow = self.convert_layer(information_flow.permute(0, 1))
+        x = information_flow.view(x.size(0), x.size(1), information_flow.size(1))
         # print(x.size())
+
+        '''
+        list = []
         for i in range(x.size(0)):
-            # convert the dim im bidirection
             information_flow = x[i]
-            # print(information_flow.size())
-            # information_flow = self.convert_layer(torch.transpose(information_flow, 0, 1))
             information_flow = self.convert_layer(information_flow)
-            # follow for the next input
-            # information_flow = normal_fc
-            # print(information_flow.size())
             information_flow = information_flow.unsqueeze(0)
             list.append(information_flow)
         x = torch.cat(list, 0)
-        # print(x.size())
-        x= torch.transpose(x, 0, 1)
+        '''
+        x = torch.transpose(x, 0, 1)
         return x, hidden
 
 
@@ -125,9 +127,6 @@ class BiLSTMList_model_CAT(nn.Module):
                 if current_layer == self.highway[0]:
                     cat_x = x
                 else:
-                    # print(cat_x.size())
-                    # two way cat
-                    # cat_x = torch.cat((cat_x, x), 2)
                     cat_x = torch.cat((cat_x, x), 0)
                     # print(cat_x.size())
 

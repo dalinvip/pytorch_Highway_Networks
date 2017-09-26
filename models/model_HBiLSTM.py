@@ -37,12 +37,15 @@ class HBiLSTM(nn.Module):
         #     init.uniform(self.bilstm.all_weights[1][3], -1, -1)
         # in_feas = self.hidden_dim
         # self.fc1 = self.init_Linear(in_fea=in_feas, out_fea=in_feas, bias=True)
-        # Highway gate layer  T in the Highway formula
+        # # Highway gate layer  T in the Highway formula
         # self.gate_layer = self.init_Linear(in_fea=in_feas, out_fea=in_feas, bias=True)
+
         in_fea = self.args.embed_dim
         out_fea = self.args.lstm_hidden_dim * 2
         self.fc1 = self.init_Linear(in_fea=in_fea, out_fea=out_fea, bias=True)
         self.gate_layer = self.init_Linear(in_fea=in_fea, out_fea=out_fea, bias=True)
+
+
         # if bidirection convert dim
         self.convert_layer = self.init_Linear(in_fea=self.args.lstm_hidden_dim * 2,
                                               out_fea=self.args.embed_dim, bias=True)
@@ -77,6 +80,11 @@ class HBiLSTM(nn.Module):
         # normal layer in the formula is H
         source_x = torch.transpose(source_x, 0, 1)
 
+        # in_fea = self.args.embed_dim
+        # out_fea = self.args.lstm_hidden_dim * 2
+        # self.fc1 = self.init_Linear(in_fea=in_fea, out_fea=out_fea, bias=True)
+        # self.gate_layer = self.init_Linear(in_fea=in_fea, out_fea=out_fea, bias=True)
+
         # the first way to convert 3D tensor to the Linear
         source_x = source_x.contiguous()
         information_source = source_x.view(source_x.size(0) * source_x.size(1), source_x.size(2))
@@ -92,7 +100,6 @@ class HBiLSTM(nn.Module):
             list.append(information_source)
         information_source = torch.cat(list, 0)
         '''
-
 
         # transformation gate layer in the formula is T
         transformation_layer = F.sigmoid(information_source)
@@ -160,7 +167,10 @@ class HBiLSTM_model(nn.Module):
 
     def init_Linear(self, in_fea, out_fea, bias):
         linear = nn.Linear(in_features=in_fea, out_features=out_fea, bias=bias)
-        return linear
+        if self.args.cuda is True:
+            return linear.cuda()
+        else:
+            return linear
 
     def init_hidden(self, num_layers, batch_size):
         # the first is the hidden h
@@ -172,19 +182,14 @@ class HBiLSTM_model(nn.Module):
             return (Variable(torch.zeros(2 * num_layers, batch_size, self.hidden_dim)),
                     Variable(torch.zeros(2 * num_layers, batch_size, self.hidden_dim)))
 
-
     def forward(self, x):
         x = self.embed(x)
         x = self.dropout_embed(x)
         # print(x.size())
         # self.output_layer = self.init_Linear(in_fea=self.args.lstm_hidden_dim * 2, out_fea=self.C, bias=True)
         self.hidden = self.init_hidden(self.num_layers, x.size(1))
-        # print(self.hidden)
         for current_layer in self.highway:
-            # print(self.hidden)
-            # print(current_layer)
             x, self.hidden = current_layer(x, self.hidden)
-            # print("wwww", x.size())
 
         # print(x.size())
         x = torch.transpose(x, 0, 1)
