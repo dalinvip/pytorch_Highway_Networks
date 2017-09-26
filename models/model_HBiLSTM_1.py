@@ -50,7 +50,7 @@ class HBiLSTM(nn.Module):
         # self.gate_layer = None
 
         # if bidirection convert dim
-        self.convert_layer = self.init_Linear(in_fea=self.args.lstm_hidden_dim * 2,
+        self.convert_layer = self.init_Linear(in_fea=self.args.lstm_hidden_dim,
                                               out_fea=self.args.embed_dim, bias=True)
         self.hidden = self.init_hidden(self.num_layers, args.batch_size)
 
@@ -76,25 +76,30 @@ class HBiLSTM(nn.Module):
         source_x = x
         # print(x)
         # print(source_x)
+        in_fea = self.args.embed_dim
+        out_fea = self.args.lstm_hidden_dim * 2
+        self.fc1 = self.init_Linear(in_fea=out_fea, out_fea=in_fea, bias=True)
+        self.gate_layer = self.init_Linear(in_fea=in_fea, out_fea=in_fea, bias=True)
+        # self.gate_layer = self.init_Linear(in_fea=out_fea, out_fea=in_fea, bias=True)
         x, hidden = self.bilstm(x, hidden)
-        normal_fc = torch.transpose(x, 0, 1)
+        normal_fc_1 = torch.transpose(x, 0, 1)
+
+        normal_fc_1 = normal_fc_1.contiguous()
+        normal_fc = normal_fc_1.view(normal_fc_1.size(0) * normal_fc_1.size(1), normal_fc_1.size(2))
+        normal_fc = self.fc1(normal_fc)
+        normal_fc = normal_fc.view(normal_fc_1.size(0), normal_fc_1.size(1), normal_fc.size(1))
+
         # normal_fc = self.gate_layer(normal_fc)
         x = torch.transpose(x, 0, 1)
         x = torch.transpose(x, 1, 2)
         # normal layer in the formula is H
         source_x = torch.transpose(source_x, 0, 1)
 
-        in_fea = self.args.embed_dim
-        out_fea = self.args.lstm_hidden_dim * 2
-        self.fc1 = self.init_Linear(in_fea=in_fea, out_fea=out_fea, bias=True)
-        self.gate_layer = self.init_Linear(in_fea=in_fea, out_fea=out_fea, bias=True)
-        # self.gate_layer = self.init_Linear(in_fea=out_fea, out_fea=in_fea, bias=True)
-
         # the first way to convert 3D tensor to the Linear
-        source_x = source_x.contiguous()
-        information_source = source_x.view(source_x.size(0) * source_x.size(1), source_x.size(2))
-        information_source = self.gate_layer(information_source)
-        information_source = information_source.view(source_x.size(0), source_x.size(1), information_source.size(1))
+        # source_x = source_x.contiguous()
+        # information_source = source_x.view(source_x.size(0) * source_x.size(1), source_x.size(2))
+        # information_source = self.gate_layer(information_source)
+        # information_source = information_source.view(source_x.size(0), source_x.size(1), information_source.size(1))
 
         '''
         # the another way to convert 3D tensor to the Linear
@@ -107,7 +112,7 @@ class HBiLSTM(nn.Module):
         '''
 
         # transformation gate layer in the formula is T
-        transformation_layer = F.sigmoid(information_source)
+        transformation_layer = F.sigmoid(source_x)
         # carry gate layer in the formula is C
         carry_layer = 1 - transformation_layer
         # formula Y = H * T + x * C
@@ -123,8 +128,8 @@ class HBiLSTM(nn.Module):
         # allow_carry = torch.mul(source_x, carry_layer)
         '''
         # the information_source compare to the source_x is for the same size of x,y,H,T
-        allow_carry = torch.mul(information_source, carry_layer)
-        # allow_carry = torch.mul(source_x, carry_layer)
+        # allow_carry = torch.mul(information_source, carry_layer)
+        allow_carry = torch.mul(source_x, carry_layer)
         information_flow = torch.add(allow_transformation, allow_carry)
 
         information_flow = information_flow.contiguous()
