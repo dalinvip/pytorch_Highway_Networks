@@ -31,14 +31,24 @@ class HighwayCNN(nn.Module):
             KK.append(K + 1 if K % 2 == 0 else K)
         self.convs1 = [nn.Conv2d(in_channels=Ci, out_channels=D, kernel_size=(K, D), stride=(1, 1),
                                  padding=(K // 2, 0), dilation=1, bias=True) for K in Ks]
+        if self.args.cuda is True:
+            for conv in self.convs1:
+                conv.cuda()
         in_feas = len(Ks) * Co
         self.fc1 = self.init_Linear(in_fea=in_feas, out_fea=in_feas, bias=True)
         # Highway gate layer  T in the Highway formula
         self.gate_layer = self.init_Linear(in_fea=in_feas, out_fea=in_feas, bias=True)
 
+        if self.args.cuda is True:
+            self.fc1.cuda()
+            self.gate_layer.cuda()
+
     def init_Linear(self, in_fea, out_fea, bias):
         linear = nn.Linear(in_features=in_fea, out_features=out_fea, bias=bias)
-        return linear
+        if self.args.cuda is True:
+            return linear.cuda()
+        else:
+            return linear
 
     def forward(self, x):
         in_fea = x.size(0)
@@ -88,10 +98,14 @@ class HighWayCNN_model(nn.Module):
 
     def init_Linear(self, in_fea, out_fea, bias):
         linear = nn.Linear(in_features=in_fea, out_features=out_fea, bias=bias)
-        return linear
+        if self.args.cuda is True:
+            return linear.cuda()
+        else:
+            return linear
 
     def forward(self, x):
         x = self.embed(x)
+        # print(x.size())
         self.output_layer = self.init_Linear(in_fea=x.size(2), out_fea=self.C, bias=True)
         for current_layer in self.highway:
             x = current_layer(x)

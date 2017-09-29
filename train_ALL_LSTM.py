@@ -64,7 +64,7 @@ def train(train_iter, dev_iter, test_iter, model, args):
                 model.hidden = model.init_hidden(args.lstm_num_layers, feature.size(1))
             logit = model(feature)
             loss = F.cross_entropy(logit, target)
-            # print(loss)
+            # print(loss)logit.size()
             loss.backward()
             if args.init_clip_max_norm is not None:
                 # print("aaaa {} ".format(args.init_clip_max_norm))
@@ -74,6 +74,7 @@ def train(train_iter, dev_iter, test_iter, model, args):
             steps += 1
             if steps % args.log_interval == 0:
                 train_size = len(train_iter.dataset)
+                # print("sadasd", torch.max(logit, 0))
                 corrects = (torch.max(logit, 1)[1].view(target.size()).data == target.data).sum()
                 accuracy = float(corrects)/batch.batch_size * 100.0
                 sys.stdout.write(

@@ -35,11 +35,11 @@ BiLSTM_LIST = False
 LSTM_LIST = False
 BiLSTM_LIST_CAT = False
 HighWay = False
-HBiLSTM = True
+HBiLSTM = False
 HLSTM = False
 HBiLSTM_CAT = False
 HCNN = False
-HighWayCNN = False
+HighWayCNN = True
 HighWayBiLSTM = False
 HighWay_CNN = False
 HighWay_BiLSTM = False
@@ -53,7 +53,7 @@ wide_conv = True
 # min freq to include during built the vocab, default is 1
 min_freq = 1
 # word_Embedding
-word_Embedding = True
+word_Embedding = False
 embed_dim = 300
 # word_Embedding_Path = "./word2vec/glove.sentiment.conj.pretrained.txt"
 word_Embedding_Path = "./word2vec/glove.840B.300d.handledword2vec.txt"
@@ -68,7 +68,7 @@ test = False
 num_threads = 1
 freq_1_unk = False
 # whether to init w
-init_weight = False
+init_weight = True
 init_weight_value = 2.0
 # L2 weight_decay
 weight_decay = 1e-8   # default value is zero in Adam SGD

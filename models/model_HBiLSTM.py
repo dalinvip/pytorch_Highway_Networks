@@ -27,20 +27,29 @@ class HBiLSTM(nn.Module):
         #     self.bilstm.flatten_parameters()
         if args.init_weight:
             print("Initing W .......")
-            init.xavier_normal(self.bilstm.all_weights[0][0], gain=np.sqrt(args.init_weight_value))
-            init.xavier_normal(self.bilstm.all_weights[0][1], gain=np.sqrt(args.init_weight_value))
-            init.xavier_normal(self.bilstm.all_weights[1][0], gain=np.sqrt(args.init_weight_value))
-            init.xavier_normal(self.bilstm.all_weights[1][1], gain=np.sqrt(args.init_weight_value))
-        # if self.bilstm.bias is True:
-        #     print("Initing bias......")
-        #     init.uniform(self.bilstm.all_weights[0][2], -1, -1)
-        #     init.uniform(self.bilstm.all_weights[0][3], -1, -1)
-        #     init.uniform(self.bilstm.all_weights[1][2], -1, -1)
-        #     init.uniform(self.bilstm.all_weights[1][3], -1, -1)
+            # init.xavier_uniform(self.bilstm.all_weights[0][0], gain=np.sqrt(args.init_weight_value))
+            init.xavier_uniform(self.bilstm.all_weights[0][0], gain=np.sqrt(self.args.init_weight))
+            init.xavier_uniform(self.bilstm.all_weights[0][1], gain=np.sqrt(self.args.init_weight))
+            init.xavier_uniform(self.bilstm.all_weights[1][0], gain=np.sqrt(self.args.init_weight))
+            init.xavier_uniform(self.bilstm.all_weights[1][1], gain=np.sqrt(self.args.init_weight))
+        if self.bilstm.bias is True:
+            print("Initing bias......")
+            a = np.sqrt(2/(1 + 600)) * np.sqrt(3)
+            init.uniform(self.bilstm.all_weights[0][2], -a, a)
+            init.uniform(self.bilstm.all_weights[0][3], -a, a)
+            init.uniform(self.bilstm.all_weights[1][2], -a, a)
+            init.uniform(self.bilstm.all_weights[1][3], -a, a)
+        print(self.bilstm.all_weights)
+
         in_feas = self.hidden_dim
         self.fc1 = self.init_Linear(in_fea=in_feas, out_fea=in_feas, bias=True)
         # Highway gate layer  T in the Highway formula
         self.gate_layer = self.init_Linear(in_fea=in_feas, out_fea=in_feas, bias=True)
+
+        # in_fea = self.args.embed_dim
+        # out_fea = self.args.lstm_hidden_dim * 2
+        # self.fc1 = self.init_Linear(in_fea=in_fea, out_fea=out_fea, bias=True)
+        # self.gate_layer = self.init_Linear(in_fea=in_fea, out_fea=out_fea, bias=True)
 
         # in_fea = self.args.embed_dim
         # out_fea = self.args.lstm_hidden_dim * 2
@@ -114,13 +123,13 @@ class HBiLSTM(nn.Module):
         allow_transformation = torch.mul(normal_fc, transformation_layer)
 
         '''
-        # # you also can choose the strategy that zero-padding
-        # zeros = torch.zeros(source_x.size(0), source_x.size(1), carry_layer.size(2) - source_x.size(2))
-        # if self.args.cuda is True:
-        #     source_x = Variable(torch.cat((zeros, source_x.data), 2)).cuda()
-        # else:
-        #     source_x = Variable(torch.cat((zeros, source_x.data), 2))
-        # allow_carry = torch.mul(source_x, carry_layer)
+        # you also can choose the strategy that zero-padding
+        zeros = torch.zeros(source_x.size(0), source_x.size(1), carry_layer.size(2) - source_x.size(2))
+        if self.args.cuda is True:
+            source_x = Variable(torch.cat((zeros, source_x.data), 2)).cuda()
+        else:
+            source_x = Variable(torch.cat((zeros, source_x.data), 2))
+        allow_carry = torch.mul(source_x, carry_layer)
         '''
         # the information_source compare to the source_x is for the same size of x,y,H,T
         allow_carry = torch.mul(information_source, carry_layer)
@@ -169,6 +178,9 @@ class HBiLSTM_model(nn.Module):
         # multiple HighWay layers List
         self.highway = nn.ModuleList([HBiLSTM(args) for _ in range(args.layer_num_highway)])
         self.output_layer = self.init_Linear(in_fea=self.args.embed_dim, out_fea=self.C, bias=True)
+        if self.output_layer.bias is True:
+            a = np.sqrt(2/(1 + self.args.embed_dim)) * np.sqrt(3)
+            init.uniform(self.output_layer, -a, a)
         self.hidden = self.init_hidden(self.num_layers, args.batch_size)
 
     def init_Linear(self, in_fea, out_fea, bias):

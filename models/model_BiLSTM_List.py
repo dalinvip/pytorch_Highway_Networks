@@ -22,6 +22,12 @@ class BiLSTMList(nn.Module):
         D = args.embed_dim
         self.C = args.class_num
         self.bilstm = nn.LSTM(D, self.hidden_dim, num_layers=self.num_layers, bias=True, bidirectional=True, dropout=args.dropout)
+        if args.init_weight:
+            print("Initing W .......")
+            init.xavier_uniform(self.bilstm.all_weights[0][0], gain=np.sqrt(args.init_weight_value))
+            init.xavier_uniform(self.bilstm.all_weights[0][1], gain=np.sqrt(args.init_weight_value))
+            init.xavier_uniform(self.bilstm.all_weights[1][0], gain=np.sqrt(args.init_weight_value))
+            init.xavier_uniform(self.bilstm.all_weights[1][1], gain=np.sqrt(args.init_weight_value))
         in_feas = self.hidden_dim
         self.fc1 = self.init_Linear(in_fea=in_feas, out_fea=in_feas, bias=True)
         # Highway gate layer  T in the Highway formula

@@ -216,6 +216,7 @@ elif args.BiLSTM_LIST_CAT is True:
 elif args.HBiLSTM is True:
     print("loading HBiLSTM model.....")
     model = model_HBiLSTM.HBiLSTM_model(args)
+    # model = model_HBiLSTM.HBiLSTM(args)
     # save model in this time
     shutil.copy("./models/model_HBiLSTM.py", "./snapshot/" + mulu)
 elif args.HLSTM is True:
@@ -285,6 +286,7 @@ elif args.BiLSTM_LIST_CAT is True:
 elif args.HBiLSTM is True:
     print("HBiLSTM training start......")
     model_count = train_ALL_LSTM.train(train_iter, dev_iter, test_iter, model, args)
+    # model_count = train_ALL_LSTM.train(train_iter, dev_iter, test_iter, model, args)
 elif args.HLSTM is True:
     print("HLSTM training start......")
     model_count = train_ALL_LSTM.train(train_iter, dev_iter, test_iter, model, args)
