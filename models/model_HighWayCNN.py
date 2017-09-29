@@ -94,7 +94,7 @@ class HighWayCNN_model(nn.Module):
             self.embed.weight.data.copy_(torch.from_numpy(pretrained_weight))
         # multiple HighWay layers List
         self.highway = nn.ModuleList([HighwayCNN(args) for _ in range(args.layer_num_highway)])
-        self.output_layer = self.init_Linear(in_fea=1000, out_fea=self.C, bias=True)
+        self.output_layer = self.init_Linear(in_fea=self.args.embed_dim, out_fea=self.C, bias=True)
 
     def init_Linear(self, in_fea, out_fea, bias):
         linear = nn.Linear(in_features=in_fea, out_features=out_fea, bias=bias)
@@ -106,11 +106,12 @@ class HighWayCNN_model(nn.Module):
     def forward(self, x):
         x = self.embed(x)
         # print(x.size())
-        self.output_layer = self.init_Linear(in_fea=x.size(2), out_fea=self.C, bias=True)
+        # self.output_layer = self.init_Linear(in_fea=x.size(2), out_fea=self.C, bias=True)
         for current_layer in self.highway:
             x = current_layer(x)
         x = torch.transpose(x, 1, 2)
         x = F.max_pool1d(x, x.size(2)).squeeze(2)
+        # print(x.size())
         output_layer = self.output_layer(x)
         return output_layer
 

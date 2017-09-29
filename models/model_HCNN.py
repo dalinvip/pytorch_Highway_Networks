@@ -22,15 +22,23 @@ class HCNN(nn.Module):
         Ci = 1
         Co = args.kernel_num
         Ks = args.kernel_sizes
-        if len(Ks) > 1:
-            print("current demo can not solve multiple kernel_sizes bug. "
-                  "please modify the length of kernel_sizes is 1")
-            exit()
+        # if len(Ks) > 1:
+        #     print("current demo can not solve multiple kernel_sizes bug. "
+        #           "please modify the length of kernel_sizes is 1")
+        #     exit()
         KK = []
         for K in Ks:
             KK.append(K + 1 if K % 2 == 0 else K)
+        print(KK)
         self.convs1 = [nn.Conv2d(in_channels=Ci, out_channels=D, kernel_size=(K, D), stride=(1, 1),
-                                 padding=(K // 2, 0), dilation=1, bias=True) for K in Ks]
+                                 padding=(K // 2, 0), dilation=1, bias=True) for K in KK]
+        if args.init_weight:
+            print("Initing W .......")
+            for conv in self.convs1:
+                init.xavier_uniform(conv.weight.data, gain=np.sqrt(args.init_weight_value))
+        if self.args.cuda is True:
+            for conv in self.convs1:
+                conv.cuda()
         in_feas = len(Ks) * Co
         self.fc1 = self.init_Linear(in_fea=in_feas, out_fea=in_feas, bias=True)
         # Highway gate layer  T in the Highway formula
@@ -38,50 +46,41 @@ class HCNN(nn.Module):
 
     def init_Linear(self, in_fea, out_fea, bias):
         linear = nn.Linear(in_features=in_fea, out_features=out_fea, bias=bias)
-        return linear
+        if self.args.cuda is True:
+            return linear.cuda()
+        else:
+            return linear
 
     def forward(self, x):
         source_x = x
-        # print("source_x ", source_x.size())
-        # print(x)
         x = x.unsqueeze(1)  # (N,Ci,W,D)
         x = [F.relu(conv(x)).squeeze(3) for conv in self.convs1]  # [(N,Co,W), ...]*len(Ks)
         x = torch.cat(x, 1)
         # in the formula is the H
         normal_fc = torch.transpose(x, 1, 2)
-        out_fea = x.size(1)
-        self.fc1 = self.init_Linear(in_fea=out_fea, out_fea=out_fea, bias=True)
-        self.gate_layer = self.init_Linear(in_fea=out_fea, out_fea=out_fea, bias=True)
-        # print(x.size())
-        # print(self.fc1)
-        # print(self.gate_layer)
-        list = []
-        # source_x = torch.transpose(source_x, 0, 1)
-        # print(source_x.size())
-        for i in range(source_x.size(0)):
-            # print(source_x[i].size())
-            information_source = self.gate_layer(source_x[i])
-            # print(information_source.size())
-            information_source = information_source.unsqueeze(0)
-            list.append(information_source)
-        information_source = torch.cat(list, 0)
-        # print("wwww", information_source.size())
-        # print(information_source)
+        self.fc1 = self.init_Linear(in_fea=self.args.embed_dim * len(self.args.kernel_sizes), out_fea=self.args.embed_dim, bias=True)
+        self.gate_layer = self.init_Linear(in_fea=self.args.embed_dim, out_fea=self.args.embed_dim *
+                                                                                len(self.args.kernel_sizes), bias=True)
+
+        source_x = source_x.contiguous()
+        information_source = source_x.view(source_x.size(0) * source_x.size(1), source_x.size(2))
+        information_source = self.gate_layer(information_source)
+        information_source = information_source.view(source_x.size(0), source_x.size(1), information_source.size(1))
+        information_source = torch.transpose(information_source, 1, 2)
+
         # the formula is Y = H * T + x * C
         # transformation gate layer in the formula is T
         transformation_layer = F.sigmoid(information_source)
-        # print(transformation_layer.size())
-        # carry gate layer in the formula is C
         carry_layer = 1 - transformation_layer
-        # print(carry_layer.size())
         allow_transformation = torch.mul(normal_fc, transformation_layer)
-        # print(sourxe_x.size())
-        # allow_carry = torch.mul(information_source, carry_layer)
-        allow_carry = torch.mul(source_x, carry_layer)
+        allow_carry = torch.mul(information_source, carry_layer)
         information_flow = torch.add(allow_transformation, allow_carry)
-        # print(information_flow.size())
-        # information_flow = torch.transpose(information_flow, 1, 2)
-        return information_flow
+
+        information_flow = information_flow.contiguous()
+        information_convert = information_flow.view(information_flow.size(0) * information_flow.size(1), information_flow.size(2))
+        information_convert = self.fc1(information_convert)
+        information_convert = information_convert.view(information_flow.size(0), information_flow.size(1), information_convert.size(1))
+        return information_convert
 
 
 # HighWay recurrent model
@@ -103,19 +102,18 @@ class HCNN_model(nn.Module):
 
     def init_Linear(self, in_fea, out_fea, bias):
         linear = nn.Linear(in_features=in_fea, out_features=out_fea, bias=bias)
-        return linear
+        if self.args.cuda is True:
+            return linear.cuda()
+        else:
+            return linear
 
     def forward(self, x):
         x = self.embed(x)
-        # print(x.size())
-        # self.output_layer = self.init_Linear(in_fea=x.size(2), out_fea=self.C, bias=True)
         for current_layer in self.highway:
-            # print(current_layer)
             x = current_layer(x)
-        # print(x.size())
         x = torch.transpose(x, 1, 2)
-        # print("wewew", x.size())
         x = F.max_pool1d(x, x.size(2)).squeeze(2)
+        x = F.relu(x)
         output_layer = self.output_layer(x)
         return output_layer
 

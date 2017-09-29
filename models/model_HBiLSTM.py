@@ -28,10 +28,10 @@ class HBiLSTM(nn.Module):
         if args.init_weight:
             print("Initing W .......")
             # init.xavier_uniform(self.bilstm.all_weights[0][0], gain=np.sqrt(args.init_weight_value))
-            init.xavier_uniform(self.bilstm.all_weights[0][0], gain=np.sqrt(self.args.init_weight))
-            init.xavier_uniform(self.bilstm.all_weights[0][1], gain=np.sqrt(self.args.init_weight))
-            init.xavier_uniform(self.bilstm.all_weights[1][0], gain=np.sqrt(self.args.init_weight))
-            init.xavier_uniform(self.bilstm.all_weights[1][1], gain=np.sqrt(self.args.init_weight))
+            init.xavier_uniform(self.bilstm.all_weights[0][0], gain=np.sqrt(self.args.init_weight_value))
+            init.xavier_uniform(self.bilstm.all_weights[0][1], gain=np.sqrt(self.args.init_weight_value))
+            init.xavier_uniform(self.bilstm.all_weights[1][0], gain=np.sqrt(self.args.init_weight_value))
+            init.xavier_uniform(self.bilstm.all_weights[1][1], gain=np.sqrt(self.args.init_weight_value))
         if self.bilstm.bias is True:
             print("Initing bias......")
             a = np.sqrt(2/(1 + 600)) * np.sqrt(3)
