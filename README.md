@@ -9,7 +9,8 @@
 
 ## Result
 - The test result in my demo. 
-> ![](https://i.imgur.com/JCGa4zi.jpg)
+
+> ![](https://i.imgur.com/mmBj4so.jpg)
 
 ## How to use the folder or file
 
@@ -151,4 +152,6 @@
 - [基于pytorch实现HighWay Networks之Train Deep Networks](http://www.cnblogs.com/bamtercelboo/p/7581353.html)
 
 - [基于pytorch实现HighWay Networks之Highway Networks详解](http://www.cnblogs.com/bamtercelboo/p/7581364.html)
+
+- [Highway Networks](https://bamtercelboo.github.io/2017/09/28/Highway%E6%80%BB%E7%BB%93new/)
 
