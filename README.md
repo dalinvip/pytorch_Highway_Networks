@@ -18,7 +18,7 @@
 
 - the file of **main-hyperparams.py** is the main function,run the command ("python main_hyperparams.py") to execute the demo.
 
-- the folder of **models** contains all neural networks models,likes ***CNN,DeepCNN,CLSTM,CBiLSTM,CGRU,CNN_LSTM,CNN_BiLSTM,CNN_BiGRU,LSTM,BiLSTM,GRU,CNN_MUI,DeepCNN_MUI,HighWay_CNN,High_BiLSTM***.
+- the folder of **models** contains all neural networks models.
 
 - the file of **train_ALL_CNN.py** is the train function about CNN
 
